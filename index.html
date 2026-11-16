@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PNHS Digital Intramurals Scoreboard</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -15,74 +15,73 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f1f3f6;
-  color: #222;
+  background: #f1f5f9;
+  color: #1e293b;
 }
 header {
   background: #172554;
   color: white;
-  padding: 22px 12px;
+  padding: 24px 12px;
   text-align: center;
 }
 header h1 { margin: 0; font-size: 23px; }
 header p { margin-bottom: 0; }
 .container {
+  width: 95%;
   max-width: 1000px;
   margin: 20px auto;
-  padding: 12px;
 }
 .card {
   background: white;
+  border-radius: 10px;
   padding: 18px;
   margin-bottom: 16px;
-  border-radius: 10px;
-  box-shadow: 0 2px 7px #00000012;
+  box-shadow: 0 2px 8px #00000012;
 }
-h2 { font-size: 19px; }
-input, button {
-  padding: 11px;
-  margin: 4px 2px;
-  border-radius: 6px;
-  font-size: 15px;
-}
-input { border: 1px solid #bbb; max-width: 100%; }
-button {
-  border: none;
-  background: #1d4ed8;
-  color: white;
-  cursor: pointer;
-}
-button:hover { opacity: .85; }
-.delete { background: #b91c1c; }
-.logout { background: #64748b; }
 #loginScreen {
   max-width: 420px;
-  margin: 45px auto;
-  padding: 20px;
+  margin: 35px auto;
 }
 #loginScreen input {
   display: block;
   width: 100%;
-  margin: 10px 0;
+  margin: 12px 0;
 }
-#loginMessage { color: #b91c1c; }
+input, button {
+  padding: 11px;
+  border-radius: 6px;
+  font-size: 15px;
+}
+input { border: 1px solid #cbd5e1; }
+button {
+  background: #1d4ed8;
+  color: white;
+  border: 0;
+  cursor: pointer;
+  margin: 4px 2px;
+}
+button:disabled { opacity: .5; }
+button:hover { opacity: .85; }
+.delete { background: #b91c1c; }
+.logout { background: #475569; }
+input:focus { outline: 2px solid #93c5fd; }
+.table-wrap { overflow-x: auto; }
 table {
-  width: 100%;
   border-collapse: collapse;
-  background: white;
-  min-width: 550px;
+  width: 100%;
+  min-width: 500px;
 }
 th, td {
-  padding: 11px 8px;
   border: 1px solid #ddd;
+  padding: 10px;
   text-align: center;
 }
 th { background: #172554; color: white; }
-.tableWrap { overflow-x: auto; }
-.scoreInput { width: 75px; text-align: center; }
+.score-input { width: 75px; text-align: center; }
 .total { font-weight: bold; }
+.message { color: #b91c1c; }
+.small { font-size: 13px; color: #64748b; }
 #app { display: none; }
-.small { font-size: 13px; color: #666; }
 </style>
 </head>
 
@@ -93,56 +92,68 @@ th { background: #172554; color: white; }
   <p>Sports Score Monitoring System</p>
 </header>
 
-<div id="loginScreen" class="card">
-  <h2>Organizer Login</h2>
-  <p>Sign in to access the scoreboard.</p>
+<div class="container">
 
-  <input type="email" id="email" placeholder="Email address">
-  <input type="password" id="password" placeholder="Password">
+  <!-- LOGIN -->
+  <div id="loginScreen" class="card">
+    <h2>Organizer Login</h2>
+    <p>Sign in to access the scoreboard.</p>
 
-  <button id="loginBtn" onclick="login()">Login</button>
-  <p id="loginMessage"></p>
-  <p class="small">Only authorized organizers can access this system.</p>
-</div>
+    <form id="loginForm">
+      <input id="email" type="email"
+        placeholder="Organizer email" required>
 
-<div id="app">
-  <div class="container">
+      <input id="password" type="password"
+        placeholder="Password" required>
+
+      <button type="submit" id="loginButton">LOGIN</button>
+    </form>
+
+    <p id="loginMessage" class="message"></p>
+    <p class="small">Authorized organizers only.</p>
+  </div>
+
+  <!-- SCOREBOARD -->
+  <div id="app">
 
     <div class="card">
-      <h2>Scoreboard Control Panel</h2>
+      <h2>Organizer Dashboard</h2>
       <span id="userEmail"></span>
-      <button class="logout" onclick="logout()">Logout</button>
+      <button class="logout" onclick="logout()">LOGOUT</button>
+      <p id="syncStatus" class="small">Connecting...</p>
     </div>
 
     <div class="card">
       <h2>Manage Teams</h2>
       <input id="teamName" placeholder="Enter team name">
-      <button onclick="addTeam()">Add Team</button>
+      <button onclick="addTeam()">ADD TEAM</button>
       <div id="teamList"></div>
     </div>
 
     <div class="card">
       <h2>Manage Sports</h2>
       <input id="sportName" placeholder="Enter sport name">
-      <button onclick="addSport()">Add Sport</button>
+      <button onclick="addSport()">ADD SPORT</button>
       <div id="sportList"></div>
     </div>
 
     <div class="card">
-      <h2>Enter Sports Scores</h2>
-      <p class="small">Enter a score for each team in each sport. Changes are saved automatically.</p>
-      <div id="scoreTable" class="tableWrap"></div>
+      <h2>Sports Scores</h2>
+      <p class="small">Enter scores. Changes are saved when you finish editing a score.</p>
+      <div id="scoreTable" class="table-wrap"></div>
     </div>
 
     <div class="card">
       <h2>Overall Team Rankings</h2>
-      <div id="rankingTable" class="tableWrap"></div>
+      <div id="rankingTable" class="table-wrap"></div>
     </div>
 
   </div>
 </div>
 
 <script>
+/* FIREBASE CONFIGURATION */
+
 const firebaseConfig = {
   apiKey: "AIzaSyCRlzYTT9Esv78Kd5NUHig88VsQElnIgk8",
   authDomain: "intramsscoreboard.firebaseapp.com",
@@ -157,91 +168,145 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
-const db = firebase.database();
+const database = firebase.database();
 
-const base = db.ref("intramsScoreboard");
+const root = database.ref("intramsScoreboard");
 
 let teams = {};
 let sports = {};
 let scores = {};
+let listenersStarted = false;
 
-function login() {
+/* LOGIN */
+
+document.getElementById("loginForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
+  const button = document.getElementById("loginButton");
+  const message = document.getElementById("loginMessage");
 
-  document.getElementById("loginMessage").textContent = "Signing in...";
+  button.disabled = true;
+  message.textContent = "Signing in...";
 
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(error => {
-      document.getElementById("loginMessage").textContent =
-        "Login failed: " + error.message;
-    });
-}
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    message.textContent = "";
+  } catch (error) {
+    message.textContent = "Login failed: " + error.message;
+  }
+
+  button.disabled = false;
+});
+
+/* AUTHENTICATION CHECK */
+
+auth.onAuthStateChanged(user => {
+  const loginScreen = document.getElementById("loginScreen");
+  const app = document.getElementById("app");
+
+  if (user) {
+    loginScreen.style.display = "none";
+    app.style.display = "block";
+
+    document.getElementById("userEmail").textContent =
+      "Organizer: " + user.email;
+
+    if (!listenersStarted) {
+      listenersStarted = true;
+      startDatabase();
+    }
+
+  } else {
+    loginScreen.style.display = "block";
+    app.style.display = "none";
+
+    listenersStarted = false;
+    root.off();
+
+    teams = {};
+    sports = {};
+    scores = {};
+
+    document.getElementById("loginForm").reset();
+  }
+});
 
 function logout() {
   auth.signOut();
 }
 
-auth.onAuthStateChanged(user => {
-  if (user) {
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("app").style.display = "block";
-    document.getElementById("userEmail").textContent =
-      "Logged in: " + user.email;
+/* REAL-TIME DATABASE */
 
-    startListeners();
-  } else {
-    document.getElementById("loginScreen").style.display = "block";
-    document.getElementById("app").style.display = "none";
+function startDatabase() {
 
-    base.off();
-    teams = {};
-    sports = {};
-    scores = {};
-  }
-});
+  document.getElementById("syncStatus").textContent =
+    "Live synchronization enabled";
 
-function startListeners() {
-  base.child("teams").on("value", snapshot => {
-    teams = snapshot.val() || {};
+  root.on("value", snapshot => {
+    const data = snapshot.val() || {};
+
+    teams = data.teams || {};
+    sports = data.sports || {};
+    scores = data.scores || {};
+
     renderAll();
-  });
 
-  base.child("sports").on("value", snapshot => {
-    sports = snapshot.val() || {};
-    renderAll();
-  });
-
-  base.child("scores").on("value", snapshot => {
-    scores = snapshot.val() || {};
-    renderAll();
+  }, error => {
+    document.getElementById("syncStatus").textContent =
+      "Database error: " + error.message;
   });
 }
+
+/* ADD TEAM */
 
 function addTeam() {
   const input = document.getElementById("teamName");
   const name = input.value.trim();
 
-  if (!name) return alert("Please enter a team name.");
+  if (!name) {
+    alert("Please enter a team name.");
+    return;
+  }
 
-  base.child("teams").push({ name })
+  root.child("teams").push({ name })
     .then(() => input.value = "")
     .catch(error => alert(error.message));
 }
+
+/* ADD SPORT */
 
 function addSport() {
   const input = document.getElementById("sportName");
   const name = input.value.trim();
 
-  if (!name) return alert("Please enter a sport.");
+  if (!name) {
+    alert("Please enter a sport.");
+    return;
+  }
 
-  base.child("sports").push({ name })
+  root.child("sports").push({ name })
     .then(() => input.value = "")
     .catch(error => alert(error.message));
 }
 
+/* RENAME */
+
+function renameItem(type, id, oldName) {
+  const newName = prompt("Enter new name:", oldName);
+
+  if (newName === null || !newName.trim()) return;
+
+  root.child(type + "/" + id + "/name")
+    .set(newName.trim())
+    .catch(error => alert(error.message));
+}
+
+/* DELETE TEAM */
+
 function deleteTeam(id) {
-  if (!confirm("Delete this team?")) return;
+  if (!confirm("Are you sure you want to delete this team?")) return;
 
   const updates = {};
   updates["teams/" + id] = null;
@@ -250,8 +315,10 @@ function deleteTeam(id) {
     updates["scores/" + sportId + "/" + id] = null;
   });
 
-  base.update(updates).catch(error => alert(error.message));
+  root.update(updates).catch(error => alert(error.message));
 }
+
+/* DELETE SPORT */
 
 function deleteSport(id) {
   if (!confirm("Delete this sport and its scores?")) return;
@@ -260,43 +327,41 @@ function deleteSport(id) {
   updates["sports/" + id] = null;
   updates["scores/" + id] = null;
 
-  base.update(updates).catch(error => alert(error.message));
+  root.update(updates).catch(error => alert(error.message));
 }
 
-function renameItem(type, id, oldName) {
-  const newName = prompt("Enter the new name:", oldName);
-
-  if (newName === null || !newName.trim()) return;
-
-  base.child(type + "/" + id + "/name")
-    .set(newName.trim())
-    .catch(error => alert(error.message));
-}
+/* UPDATE SCORES */
 
 function updateScore(sportId, teamId, value) {
+
   if (value.trim() === "") {
-    base.child("scores/" + sportId + "/" + teamId)
-      .remove();
+    root.child("scores/" + sportId + "/" + teamId)
+      .remove()
+      .catch(error => alert(error.message));
     return;
   }
 
   const number = Number(value);
 
   if (!Number.isFinite(number) || number < 0) {
-    alert("Please enter a valid score of zero or higher.");
+    alert("Enter a valid score.");
     renderAll();
     return;
   }
 
-  base.child("scores/" + sportId + "/" + teamId)
+  root.child("scores/" + sportId + "/" + teamId)
     .set(number)
     .catch(error => alert(error.message));
 }
+
+/* GET SCORE */
 
 function getScore(sportId, teamId) {
   const value = scores[sportId]?.[teamId];
   return Number.isFinite(value) ? value : 0;
 }
+
+/* RENDER EVERYTHING */
 
 function renderAll() {
   renderTeams();
@@ -305,61 +370,67 @@ function renderAll() {
   renderRankings();
 }
 
-function makeButton(text, className, action) {
+function createButton(label, className, action) {
   const button = document.createElement("button");
-  button.textContent = text;
-  if (className) button.className = className;
+  button.textContent = label;
+  button.className = className || "";
   button.onclick = action;
   return button;
 }
 
+/* DISPLAY TEAMS */
+
 function renderTeams() {
-  const container = document.getElementById("teamList");
-  container.replaceChildren();
+  const list = document.getElementById("teamList");
+  list.replaceChildren();
 
   Object.entries(teams).forEach(([id, team]) => {
     const row = document.createElement("div");
-    row.style.margin = "8px 0";
+    row.style.margin = "10px 0";
 
     const name = document.createElement("span");
     name.textContent = team.name + " ";
     row.appendChild(name);
 
-    row.appendChild(makeButton("Rename", "", () =>
+    row.appendChild(createButton("Rename", "", () =>
       renameItem("teams", id, team.name)
     ));
 
-    row.appendChild(makeButton("Delete", "delete", () =>
+    row.appendChild(createButton("Delete", "delete", () =>
       deleteTeam(id)
     ));
 
-    container.appendChild(row);
+    list.appendChild(row);
   });
 }
 
+/* DISPLAY SPORTS */
+
 function renderSports() {
-  const container = document.getElementById("sportList");
-  container.replaceChildren();
+  const list = document.getElementById("sportList");
+  list.replaceChildren();
 
   Object.entries(sports).forEach(([id, sport]) => {
     const row = document.createElement("div");
-    row.style.margin = "8px 0";
+    row.style.margin = "10px 0";
 
     const name = document.createElement("span");
     name.textContent = sport.name + " ";
     row.appendChild(name);
 
-    row.appendChild(makeButton("Rename", "", () =>
+    row.appendChild(createButton("Rename", "", () =>
       renameItem("sports", id, sport.name)
     ));
 
-    row.appendChild(makeButton("Delete", "delete", () =>
+    row.appendChild(createButton("Delete", "delete", () =>
       deleteSport(id)
     ));
 
-    container.appendChild(row);
+    list.appendChild(row);
   });
 }
+
+/* DISPLAY SCORES */
 
 function renderScores() {
   const container = document.getElementById("scoreTable");
@@ -369,21 +440,21 @@ function renderScores() {
   const sportEntries = Object.entries(sports);
 
   if (!teamEntries.length || !sportEntries.length) {
-    container.textContent = "Add at least one team and one sport first.";
+    container.textContent = "Please add teams and sports first.";
     return;
   }
 
   const table = document.createElement("table");
-  const head = document.createElement("tr");
+  const header = document.createElement("tr");
 
   ["Team", ...sportEntries.map(([, sport]) => sport.name), "Total"]
     .forEach(label => {
       const th = document.createElement("th");
       th.textContent = label;
-      head.appendChild(th);
+      header.appendChild(th);
     });
 
-  table.appendChild(head);
+  table.appendChild(header);
 
   teamEntries.forEach(([teamId, team]) => {
     const row = document.createElement("tr");
@@ -404,9 +475,9 @@ function renderScores() {
       input.type = "number";
       input.min = "0";
       input.step = "any";
-      input.className = "scoreInput";
+      input.className = "score-input";
       input.value = scores[sportId]?.[teamId] ?? "";
-      input.setAttribute("aria-label", "Score");
+      input.setAttribute("aria-label", team.name + " score");
 
       input.addEventListener("change", () => {
         updateScore(sportId, teamId, input.value);
@@ -426,6 +497,8 @@ function renderScores() {
 
   container.appendChild(table);
 }
+
+/* TEAM RANKINGS */
 
 function renderRankings() {
   const container = document.getElementById("rankingTable");
